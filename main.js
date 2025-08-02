@@ -126,7 +126,8 @@ ipcMain.handle('get-video-info', async (event, url) => {
               duration: info.duration || 0,
               uploader: info.uploader || 'Unknown',
               view_count: info.view_count || 0,
-              thumbnail: info.thumbnail || null
+              thumbnail: info.thumbnail || null,
+              formats: info.formats || []
             });
           } else {
             // Playlist
@@ -178,10 +179,8 @@ ipcMain.handle('start-download', async (event, options) => {
     } else if (options.format === 'm4a') {
       args.push('-x', '--audio-format', 'm4a');
     } else {
-      const formatString = options.quality === 'best' 
-        ? `best[ext=${options.format}]/best`
-        : `best[height<=${options.quality.replace('p', '')}][ext=${options.format}]/best[height<=${options.quality.replace('p', '')}]/best[ext=${options.format}]/best`;
-      args.push('-f', formatString);
+      // The 'quality' now holds the format_id. We combine it with best audio.
+      args.push('-f', `${options.quality}+bestaudio/best`);
     }
 
     // Additional options

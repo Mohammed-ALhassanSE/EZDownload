@@ -450,8 +450,28 @@ function displayVideoInfo(info) {
         elements.videoThumbnail.style.display = 'block';
     }
 
-    // Set inline options to match default settings
-    elements.inlineQualitySelect.value = elements.qualitySelect.value;
+    // Populate quality select with format information
+    const qualitySelect = elements.inlineQualitySelect;
+    qualitySelect.innerHTML = ''; // Clear previous options
+
+    if (info.formats) {
+        info.formats.forEach(format => {
+            if (format.vcodec !== 'none') { // Only show video formats
+                const option = document.createElement('option');
+                option.value = format.format_id;
+
+                let label = format.format_note || `${format.height}p`;
+                if (format.filesize || format.filesize_approx) {
+                    const size = format.filesize || format.filesize_approx;
+                    label += ` (${formatBytes(size)})`;
+                }
+                option.textContent = label;
+                qualitySelect.appendChild(option);
+            }
+        });
+    }
+
+    // Set inline format selector to match default
     elements.inlineFormatSelect.value = elements.formatSelect.value;
     
     // Show card with animation
@@ -513,12 +533,13 @@ async function startDownload() {
         outputDir: outputDir,
         quality: elements.inlineQualitySelect.value,
         format: elements.inlineFormatSelect.value,
-        playlist: elements.playlistCheck.checked,
         subtitles: elements.subtitlesCheck.checked,
         subtitleLang: elements.subtitleLangInput.value,
-        thumbnail: elements.thumbnailCheck.checked,
-        metadata: elements.metadataCheck.checked,
-        description: elements.descriptionCheck.checked
+        // The following options are temporarily disabled until they are added to the settings tab
+        playlist: false,
+        thumbnail: false,
+        metadata: false,
+        description: false
     };
     
     try {
@@ -758,6 +779,18 @@ function formatDuration(seconds) {
 function formatNumber(num) {
     if (!num) return '0';
     return num.toLocaleString();
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
 // Settings Management
