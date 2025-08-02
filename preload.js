@@ -13,10 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Video operations
   getVideoInfo: (url) => ipcRenderer.invoke('get-video-info', url),
-  getPlaylistInfo: (url) => ipcRenderer.invoke('get-playlist-info', url),
   startDownload: (options) => ipcRenderer.invoke('start-download', options),
   stopDownload: () => ipcRenderer.invoke('stop-download'),
   checkYtdlp: () => ipcRenderer.invoke('check-ytdlp'),
+  updateYtdlp: () => ipcRenderer.invoke('update-ytdlp'),
 
   // Settings
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -34,6 +34,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onDownloadError: (callback) => {
     ipcRenderer.on('download-error', (event, data) => callback(data));
+  },
+  onYtdlpUpdateOutput: (callback) => {
+    ipcRenderer.on('ytdlp-update-output', (event, data) => callback(data));
   },
 
   // Remove listeners

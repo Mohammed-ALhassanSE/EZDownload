@@ -1,6 +1,8 @@
 // Application State
 let isDownloading = false;
 let currentProgress = 0;
+let currentPlaylist = [];
+const BATCH_SIZE = 10;
 
 // DOM Elements
 const elements = {
@@ -21,7 +23,6 @@ const elements = {
     urlInput: document.getElementById('urlInput'),
     pasteBtn: document.getElementById('pasteBtn'),
     clearBtn: document.getElementById('clearBtn'),
-    getInfoBtn: document.getElementById('getInfoBtn'),
     
     // Video info
     videoInfoCard: document.getElementById('videoInfoCard'),
@@ -42,6 +43,7 @@ const elements = {
     thumbnailCheck: document.getElementById('thumbnailCheck'),
     metadataCheck: document.getElementById('metadataCheck'),
     descriptionCheck: document.getElementById('descriptionCheck'),
+    subtitleLangInput: document.getElementById('subtitleLangInput'),
     
     // Download controls
     downloadBtn: document.getElementById('downloadBtn'),
@@ -60,7 +62,27 @@ const elements = {
     
     // Toast and loading
     toastContainer: document.getElementById('toastContainer'),
-    loadingOverlay: document.getElementById('loadingOverlay')
+    loadingOverlay: document.getElementById('loadingOverlay'),
+
+    // Version management
+    ytdlpVersion: document.getElementById('ytdlpVersion'),
+    updateYtdlpBtn: document.getElementById('updateYtdlpBtn'),
+
+    // Inline options
+    inlineQualitySelect: document.getElementById('inlineQualitySelect'),
+    inlineFormatSelect: document.getElementById('inlineFormatSelect'),
+
+    // Playlist Modal
+    playlistModal: document.getElementById('playlistModal'),
+    closePlaylistModal: document.getElementById('closePlaylistModal'),
+    playlistTitle: document.getElementById('playlistTitle'),
+    playlistVideosContainer: document.getElementById('playlistVideosContainer'),
+    selectAllBtn: document.getElementById('selectAllBtn'),
+    deselectAllBtn: document.getElementById('deselectAllBtn'),
+    rangeStart: document.getElementById('rangeStart'),
+    rangeEnd: document.getElementById('rangeEnd'),
+    selectRangeBtn: document.getElementById('selectRangeBtn'),
+    downloadSelectedBtn: document.getElementById('downloadSelectedBtn')
 };
 
 // Initialize Application
@@ -102,7 +124,10 @@ function setupEventListeners() {
     // URL actions
     elements.pasteBtn.addEventListener('click', pasteFromClipboard);
     elements.clearBtn.addEventListener('click', clearUrls);
-    elements.getInfoBtn.addEventListener('click', getVideoInfo);
+    elements.urlInput.addEventListener('paste', () => {
+        // Use a short timeout to allow the pasted text to be processed
+        setTimeout(getVideoInfo, 100);
+    });
     
     // Directory actions
     elements.browseBtn.addEventListener('click', browseDirectory);
@@ -114,12 +139,31 @@ function setupEventListeners() {
     
     // Log
     elements.clearLogBtn.addEventListener('click', clearLog);
+
+    // Version management
+    elements.updateYtdlpBtn.addEventListener('click', updateYtdlp);
+
+    // Playlist modal
+    elements.closePlaylistModal.addEventListener('click', () => {
+        elements.playlistModal.style.display = 'none';
+    });
+    elements.selectAllBtn.addEventListener('click', () => selectAllPlaylistItems(true));
+    elements.deselectAllBtn.addEventListener('click', () => selectAllPlaylistItems(false));
+    elements.selectRangeBtn.addEventListener('click', selectPlaylistRange);
+    elements.playlistVideosContainer.addEventListener('click', (e) => {
+        const item = e.target.closest('.playlist-item');
+        if (item) {
+            item.classList.toggle('selected');
+        }
+    });
+    elements.downloadSelectedBtn.addEventListener('click', downloadSelectedVideos);
     
     // Download event listeners
     window.electronAPI.onDownloadProgress(handleDownloadProgress);
     window.electronAPI.onDownloadOutput(handleDownloadOutput);
     window.electronAPI.onDownloadComplete(handleDownloadComplete);
     window.electronAPI.onDownloadError(handleDownloadError);
+    window.electronAPI.onYtdlpUpdateOutput(handleYtdlpUpdateOutput);
 }
 
 // Setup Animations
@@ -183,18 +227,45 @@ async function checkYtdlpStatus() {
         if (result.success) {
             elements.statusDot.className = 'status-dot connected';
             elements.statusText.textContent = `yt-dlp ${result.version}`;
+            elements.ytdlpVersion.textContent = `Installed Version: ${result.version}`;
             showToast('Success', 'yt-dlp is ready!', 'success');
         } else {
             elements.statusDot.className = 'status-dot error';
             elements.statusText.textContent = 'yt-dlp not found';
+            elements.ytdlpVersion.textContent = 'yt-dlp not found';
             showToast('Error', 'yt-dlp not installed. Please install it first.', 'error');
         }
     } catch (error) {
         elements.statusDot.className = 'status-dot error';
         elements.statusText.textContent = 'Connection error';
+        elements.ytdlpVersion.textContent = 'Error checking version';
         showToast('Error', 'Failed to check yt-dlp status', 'error');
     } finally {
         showLoading(false);
+    }
+}
+
+// Version Management
+async function updateYtdlp() {
+    try {
+        showLoading(true);
+        addLog('Checking for yt-dlp updates...');
+        await window.electronAPI.updateYtdlp();
+        animateButton(elements.updateYtdlpBtn);
+    } catch (error) {
+        showToast('Error', 'Failed to start yt-dlp update', 'error');
+        addLog(`Error starting update: ${error.message}`, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function handleYtdlpUpdateOutput(output) {
+    addLog(output);
+    showToast('yt-dlp Update', output, 'info');
+    // After update, re-check the version
+    if (output.includes('Updated yt-dlp')) {
+        checkYtdlpStatus();
     }
 }
 
@@ -239,14 +310,18 @@ async function getVideoInfo() {
     
     try {
         showLoading(true);
-        animateButton(elements.getInfoBtn);
         addLog('Getting video information...');
         
         const info = await window.electronAPI.getVideoInfo(url);
         
         if (info.success) {
-            displayVideoInfo(info);
-            showToast('Success', 'Video information loaded', 'success');
+            if (info.isPlaylist) {
+                displayPlaylistInfo(info);
+                showToast('Success', 'Playlist information loaded', 'success');
+            } else {
+                displayVideoInfo(info);
+                showToast('Success', 'Video information loaded', 'success');
+            }
         } else {
             throw new Error(info.error);
         }
@@ -256,6 +331,111 @@ async function getVideoInfo() {
     } finally {
         showLoading(false);
     }
+}
+
+// Display Playlist Info
+function displayPlaylistInfo(info) {
+    elements.playlistTitle.textContent = info.title || 'Playlist';
+    elements.playlistVideosContainer.innerHTML = ''; // Clear previous items
+    currentPlaylist = info.videos;
+
+    loadMorePlaylistItems();
+
+    elements.playlistModal.style.display = 'flex';
+}
+
+function loadMorePlaylistItems() {
+    const container = elements.playlistVideosContainer;
+    const existingItems = container.querySelectorAll('.playlist-item').length;
+    const nextBatch = currentPlaylist.slice(existingItems, existingItems + BATCH_SIZE);
+
+    nextBatch.forEach((video, index) => {
+        const item = document.createElement('div');
+        const overallIndex = existingItems + index;
+        item.className = 'playlist-item';
+        item.dataset.url = video.original_url || `https://www.youtube.com/watch?v=${video.id}`;
+        item.dataset.index = overallIndex + 1;
+
+        item.innerHTML = `
+            <div class="playlist-item-thumbnail" style="background-image: url('${video.thumbnail}')"></div>
+            <div class="playlist-item-details">
+                <div class="playlist-item-title">${video.title}</div>
+                <div class="playlist-item-meta">
+                    <span>${video.uploader || ''}</span>
+                    <span>${formatDuration(video.duration)}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+
+    // Remove previous load more button
+    const existingLoadMoreBtn = container.querySelector('.load-more-btn');
+    if (existingLoadMoreBtn) {
+        existingLoadMoreBtn.remove();
+    }
+
+    // Add new load more button if there are more videos
+    if (container.querySelectorAll('.playlist-item').length < currentPlaylist.length) {
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.className = 'btn-secondary load-more-btn';
+        loadMoreBtn.textContent = 'Load More';
+        loadMoreBtn.addEventListener('click', loadMorePlaylistItems);
+        container.appendChild(loadMoreBtn);
+    }
+}
+
+function selectAllPlaylistItems(selected) {
+    const items = elements.playlistVideosContainer.querySelectorAll('.playlist-item');
+    items.forEach(item => {
+        if (selected) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+function selectPlaylistRange() {
+    const start = parseInt(elements.rangeStart.value, 10);
+    const end = parseInt(elements.rangeEnd.value, 10);
+
+    if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+        showToast('Warning', 'Invalid range selected', 'warning');
+        return;
+    }
+
+    selectAllPlaylistItems(false); // Deselect all first
+
+    const items = elements.playlistVideosContainer.querySelectorAll('.playlist-item');
+    items.forEach(item => {
+        const index = parseInt(item.dataset.index, 10);
+        if (index >= start && index <= end) {
+            item.classList.add('selected');
+        }
+    });
+}
+
+async function downloadSelectedVideos() {
+    const selectedItems = elements.playlistVideosContainer.querySelectorAll('.playlist-item.selected');
+
+    if (selectedItems.length === 0) {
+        showToast('Warning', 'No videos selected for download', 'warning');
+        return;
+    }
+
+    const urls = Array.from(selectedItems).map(item => item.dataset.url);
+    const urlString = urls.join('\n');
+
+    // Use a temporary textarea to reuse the startDownload logic
+    const originalValue = elements.urlInput.value;
+    elements.urlInput.value = urlString;
+
+    await startDownload();
+
+    // Restore original value if needed
+    elements.urlInput.value = originalValue;
+    elements.playlistModal.style.display = 'none';
 }
 
 // Display Video Info
@@ -269,6 +449,10 @@ function displayVideoInfo(info) {
         elements.videoThumbnail.src = info.thumbnail;
         elements.videoThumbnail.style.display = 'block';
     }
+
+    // Set inline options to match default settings
+    elements.inlineQualitySelect.value = elements.qualitySelect.value;
+    elements.inlineFormatSelect.value = elements.formatSelect.value;
     
     // Show card with animation
     elements.videoInfoCard.style.display = 'block';
@@ -327,10 +511,11 @@ async function startDownload() {
     const options = {
         url: url,
         outputDir: outputDir,
-        quality: elements.qualitySelect.value,
-        format: elements.formatSelect.value,
+        quality: elements.inlineQualitySelect.value,
+        format: elements.inlineFormatSelect.value,
         playlist: elements.playlistCheck.checked,
         subtitles: elements.subtitlesCheck.checked,
+        subtitleLang: elements.subtitleLangInput.value,
         thumbnail: elements.thumbnailCheck.checked,
         metadata: elements.metadataCheck.checked,
         description: elements.descriptionCheck.checked
@@ -597,6 +782,9 @@ async function loadSettings() {
         if (settings.subtitles !== undefined) {
             elements.subtitlesCheck.checked = settings.subtitles;
         }
+        if (settings.subtitleLang) {
+            elements.subtitleLangInput.value = settings.subtitleLang;
+        }
         if (settings.thumbnail !== undefined) {
             elements.thumbnailCheck.checked = settings.thumbnail;
         }
@@ -618,6 +806,7 @@ async function saveSettings() {
         format: elements.formatSelect.value,
         playlist: elements.playlistCheck.checked,
         subtitles: elements.subtitlesCheck.checked,
+        subtitleLang: elements.subtitleLangInput.value,
         thumbnail: elements.thumbnailCheck.checked,
         metadata: elements.metadataCheck.checked,
         description: elements.descriptionCheck.checked
@@ -632,7 +821,7 @@ async function saveSettings() {
 
 // Auto-save settings when options change
 document.addEventListener('change', (e) => {
-    if (e.target.matches('#outputDir, #qualitySelect, #formatSelect, input[type="checkbox"]')) {
+    if (e.target.matches('#outputDir, #qualitySelect, #formatSelect, input[type="checkbox"], #subtitleLangInput')) {
         saveSettings();
     }
 });
