@@ -1,6 +1,6 @@
 # YT-DLP GUI - Electron App
 
-A beautiful, anime-inspired GUI for yt-dlp with smooth animations and a modern interface.
+A beautiful and clean GUI for yt-dlp with smooth animations and a modern interface.
 
 ## Features
 
@@ -12,7 +12,7 @@ A beautiful, anime-inspired GUI for yt-dlp with smooth animations and a modern i
 - **Custom Output**: Choose your download location
 - **Playlist Support**: Download entire playlists or select specific videos
 - **Additional Options**: Subtitles, thumbnails, metadata, and more
-- **Toast Notifications**: Beautiful popup notifications for user feedback
+- **Toast Notifications**: Beautiful pop-up notifications for user feedback
 - **Auto-save Settings**: Your preferences are automatically saved
 
 ## Prerequisites
