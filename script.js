@@ -2,6 +2,7 @@
 let isDownloading = false;
 let currentProgress = 0;
 let currentPlaylist = [];
+let currentVideoInfo = null;
 const BATCH_SIZE = 10;
 
 // DOM Elements
@@ -75,6 +76,8 @@ const elements = {
     // Playlist Modal
     playlistModal: document.getElementById('playlistModal'),
     closePlaylistModal: document.getElementById('closePlaylistModal'),
+    historyContainer: document.getElementById('historyContainer'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     playlistTitle: document.getElementById('playlistTitle'),
     playlistVideosContainer: document.getElementById('playlistVideosContainer'),
     selectAllBtn: document.getElementById('selectAllBtn'),
@@ -147,6 +150,23 @@ function setupEventListeners() {
     elements.closePlaylistModal.addEventListener('click', () => {
         elements.playlistModal.style.display = 'none';
     });
+
+    // History actions
+    elements.clearHistoryBtn.addEventListener('click', clearHistory);
+    elements.historyContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('re-download-btn')) {
+            const url = e.target.dataset.url;
+            elements.urlInput.value = url;
+            getVideoInfo();
+            switchTab('download');
+        }
+        if (e.target.classList.contains('open-folder-btn')) {
+            const title = e.target.dataset.title;
+            const dir = elements.outputDir.value;
+            const videoDir = `${dir}/${title}`;
+            window.electronAPI.openDirectory(videoDir);
+        }
+    });
     elements.selectAllBtn.addEventListener('click', () => selectAllPlaylistItems(true));
     elements.deselectAllBtn.addEventListener('click', () => selectAllPlaylistItems(false));
     elements.selectRangeBtn.addEventListener('click', selectPlaylistRange);
@@ -191,6 +211,9 @@ function setupAnimations() {
 
 // Tab Switching
 function switchTab(tabName) {
+    if (tabName === 'history') {
+        displayHistory();
+    }
     // Update navigation
     elements.navItems.forEach(item => {
         item.classList.remove('active');
@@ -260,6 +283,16 @@ async function updateYtdlp() {
     }
 }
 
+async function clearHistory() {
+    const result = await window.electronAPI.clearHistory();
+    if (result.success) {
+        showToast('Success', 'History cleared', 'success');
+        displayHistory();
+    } else {
+        showToast('Error', 'Failed to clear history', 'error');
+    }
+}
+
 function handleYtdlpUpdateOutput(output) {
     addLog(output);
     showToast('yt-dlp Update', output, 'info');
@@ -267,6 +300,41 @@ function handleYtdlpUpdateOutput(output) {
     if (output.includes('Updated yt-dlp')) {
         checkYtdlpStatus();
     }
+}
+
+// History
+async function displayHistory() {
+    const history = await window.electronAPI.getHistory();
+    const container = elements.historyContainer;
+    container.innerHTML = '';
+
+    if (history.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-history"></i>
+                <h3>No History Yet</h3>
+                <p>Your downloaded videos will appear here.</p>
+            </div>
+        `;
+        return;
+    }
+
+    history.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.innerHTML = `
+            <div class="history-item-thumbnail" style="background-image: url('${item.thumbnail}')"></div>
+            <div class="history-item-details">
+                <div class="history-item-title">${item.title}</div>
+                <div class="history-item-meta">Downloaded on ${new Date(item.downloadDate).toLocaleDateString()}</div>
+                <div class="history-item-actions">
+                    <button class="btn-secondary re-download-btn" data-url="${item.url}">Re-download</button>
+                    <button class="btn-secondary open-folder-btn" data-title="${item.title}">Open Folder</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(historyItem);
+    });
 }
 
 // URL Actions
@@ -440,6 +508,7 @@ async function downloadSelectedVideos() {
 
 // Display Video Info
 function displayVideoInfo(info) {
+    currentVideoInfo = info; // Store current video info
     elements.videoTitle.textContent = info.title;
     elements.videoUploader.textContent = info.uploader;
     elements.videoDuration.textContent = formatDuration(info.duration);
@@ -535,6 +604,7 @@ async function startDownload() {
         format: elements.inlineFormatSelect.value,
         subtitles: elements.subtitlesCheck.checked,
         subtitleLang: elements.subtitleLangInput.value,
+        videoInfo: currentVideoInfo, // Pass video info for history
         // The following options are temporarily disabled until they are added to the settings tab
         playlist: false,
         thumbnail: false,

@@ -200,16 +200,16 @@
                 <div class="tab-content" id="historyTab">
                     <div class="tab-header">
                         <h1>Download History</h1>
-                        <p>View and manage your download history</p>
-                    </div>
-                    <div class="card">
-                        <div class="card-content">
-                            <div class="empty-state">
-                                <i class="fas fa-history"></i>
-                                <h3>Coming Soon</h3>
-                                <p>Download history feature will be available in the next update</p>
-                            </div>
+                        <div class="flex justify-between items-center">
+                            <p>View and manage your download history</p>
+                            <button class="btn-danger" id="clearHistoryBtn">
+                                <i class="fas fa-trash"></i>
+                                Clear History
+                            </button>
                         </div>
+                    </div>
+                    <div class="history-container" id="historyContainer">
+                        <!-- History items will be dynamically inserted here -->
                     </div>
                 </div>
 

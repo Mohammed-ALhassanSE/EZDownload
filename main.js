@@ -244,6 +244,13 @@ ipcMain.handle('start-download', async (event, options) => {
     downloadProcess.on('close', (code) => {
       downloadProcess = null;
       mainWindow.webContents.send('download-complete', { code });
+      if (code === 0 && options.videoInfo) {
+        saveHistory({
+            ...options.videoInfo,
+            url: options.url,
+            downloadDate: new Date().toISOString()
+        });
+      }
       if (!hasStarted) {
         reject({ success: false, error: 'Download failed to start' });
       }
@@ -335,8 +342,54 @@ ipcMain.handle('get-default-path', () => {
   return path.join(os.homedir(), 'Downloads', 'yt-dlp');
 });
 
+// History management
+const historyPath = path.join(os.homedir(), '.ytdlp-gui-history.json');
+
+function loadHistory() {
+  try {
+    if (fs.existsSync(historyPath)) {
+      const data = fs.readFileSync(historyPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading history:', error);
+  }
+  return [];
+}
+
+function saveHistory(videoInfo) {
+  const history = loadHistory();
+  // Avoid duplicates
+  const existingIndex = history.findIndex(item => item.url === videoInfo.url);
+  if (existingIndex > -1) {
+    history.splice(existingIndex, 1);
+  }
+  history.unshift(videoInfo); // Add to the beginning
+  try {
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+  } catch (error) {
+    console.error('Error saving history:', error);
+  }
+}
+
 // Settings management
 const settingsPath = path.join(os.homedir(), '.ytdlp-gui-settings.json');
+
+ipcMain.handle('get-history', () => {
+    return loadHistory();
+});
+
+ipcMain.handle('clear-history', () => {
+    try {
+        if (fs.existsSync(historyPath)) {
+            fs.unlinkSync(historyPath);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        return { success: false, error: error.message };
+    }
+});
 
 ipcMain.handle('load-settings', () => {
   try {

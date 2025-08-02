@@ -953,6 +953,51 @@ body {
 }
 
 
+.history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.history-item-thumbnail {
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+}
+
+.history-item-details {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.history-item-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    flex: 1;
+}
+
+.history-item-meta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 16px;
+}
+
+.history-item-actions {
+    display: flex;
+    gap: 12px;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {

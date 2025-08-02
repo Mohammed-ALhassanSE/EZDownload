@@ -22,6 +22,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 
+  // History
+  getHistory: () => ipcRenderer.invoke('get-history'),
+  clearHistory: () => ipcRenderer.invoke('clear-history'),
+
   // Event listeners
   onDownloadProgress: (callback) => {
     ipcRenderer.on('download-progress', (event, data) => callback(data));
