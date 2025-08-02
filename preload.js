@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // History
   getHistory: () => ipcRenderer.invoke('get-history'),
   clearHistory: () => ipcRenderer.invoke('clear-history'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
 
   // Event listeners
   onDownloadProgress: (callback) => {

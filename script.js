@@ -100,6 +100,12 @@ async function initializeApp() {
     // Check yt-dlp availability
     await checkYtdlpStatus();
     
+    // Check for updates
+    const updateOutput = await window.electronAPI.checkForUpdates();
+    if (updateOutput && !updateOutput.includes('is up to date')) {
+        showToast('Update Available', 'A new version of yt-dlp is available. Please update in the Settings tab.', 'info');
+    }
+
     // Set default output directory
     try {
         const defaultPath = await window.electronAPI.getDefaultPath();
@@ -381,6 +387,7 @@ async function getVideoInfo() {
         addLog('Getting video information...');
         
         const info = await window.electronAPI.getVideoInfo(url);
+        console.log('Received video info:', info); // Debugging
         
         if (info.success) {
             if (info.isPlaylist) {
@@ -709,7 +716,7 @@ function handleDownloadError(error) {
     isDownloading = false;
     updateDownloadUI(false);
     addLog(`Download error: ${error}`, 'error');
-    showToast('Error', 'Download error occurred', 'error');
+    showToast('Download Error', error, 'error');
 }
 
 // UI Updates

@@ -179,8 +179,17 @@ ipcMain.handle('start-download', async (event, options) => {
     } else if (options.format === 'm4a') {
       args.push('-x', '--audio-format', 'm4a');
     } else {
-      // The 'quality' now holds the format_id. We combine it with best audio.
-      args.push('-f', `${options.quality}+bestaudio/best`);
+      let formatString;
+      if (isNaN(parseInt(options.quality, 10))) {
+        // Handle strings like '1080p' or 'best'
+        formatString = options.quality === 'best'
+            ? `best[ext=${options.format}]/best`
+            : `best[height<=${options.quality.replace('p', '')}][ext=${options.format}]/best[height<=${options.quality.replace('p', '')}]/best[ext=${options.format}]/best`;
+      } else {
+        // Handle format_id
+        formatString = `${options.quality}+bestaudio/best`;
+      }
+      args.push('-f', formatString);
     }
 
     // Additional options
@@ -238,7 +247,11 @@ ipcMain.handle('start-download', async (event, options) => {
     });
 
     downloadProcess.stderr.on('data', (data) => {
-      mainWindow.webContents.send('download-output', `Error: ${data.toString()}`);
+      const errorOutput = data.toString();
+      if (errorOutput.includes('403')) {
+          mainWindow.webContents.send('download-error', 'HTTP Error 403: Forbidden. Your version of yt-dlp may be outdated. Please try updating it in the Settings tab.');
+      }
+      mainWindow.webContents.send('download-output', `Error: ${errorOutput}`);
     });
 
     downloadProcess.on('close', (code) => {
@@ -374,6 +387,19 @@ function saveHistory(videoInfo) {
 
 // Settings management
 const settingsPath = path.join(os.homedir(), '.ytdlp-gui-settings.json');
+
+ipcMain.handle('check-for-updates', async () => {
+    return new Promise((resolve) => {
+        const ytdlpUpdate = spawn('yt-dlp', ['-U']);
+        let output = '';
+        ytdlpUpdate.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+        ytdlpUpdate.on('close', () => {
+            resolve(output);
+        });
+    });
+});
 
 ipcMain.handle('get-history', () => {
     return loadHistory();
