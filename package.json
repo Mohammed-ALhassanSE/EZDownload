@@ -4,10 +4,11 @@
   "description": "Beautiful yt-dlp GUI with anime-inspired design",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
-    "build": "electron-builder",
-    "dist": "electron-builder --publish=never"
+    "start": "npm run build:css && electron .",
+    "dev": "npm run build:css -- --watch & electron . --dev",
+    "build": "npm run build:css && electron-builder",
+    "dist": "electron-builder --publish=never",
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./output.css"
   },
   "keywords": [
     "yt-dlp",
@@ -19,10 +20,12 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
     "electron": "^25.9.8",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   },
-  "dependencies": {},
   "build": {
     "appId": "com.yourname.ytdlp-gui",
     "productName": "YT-DLP GUI",

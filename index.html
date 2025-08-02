@@ -3,320 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YT-DLP GUI</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>EZDownload</title>
+    <link rel="stylesheet" href="output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-    <div class="app-container">
-        <!-- Custom Title Bar -->
-        <div class="title-bar">
-            <div class="title-bar-left">
-                <div class="app-icon">
+<body class="bg-zinc-900 text-white" style="font-family: 'Inter', sans-serif;">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-zinc-800 p-6 flex flex-col">
+            <h1 class="text-2xl font-bold mb-8">EZDownload</h1>
+            <nav class="flex flex-col space-y-2">
+                <a href="#" class="nav-item active flex items-center space-x-3 px-4 py-2 rounded-md bg-gradient-to-r from-indigo-500 to-purple-500" data-tab="download">
                     <i class="fas fa-download"></i>
+                    <span>Download</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-2 rounded-md hover:bg-zinc-700" data-tab="history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-2 rounded-md hover:bg-zinc-700" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="mt-auto">
+                <div class="flex items-center space-x-2 p-2 rounded-md bg-zinc-700/50">
+                    <div id="statusDot" class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span id="statusText" class="text-sm">Checking...</span>
                 </div>
-                <span class="app-title">EZDownload</span>
             </div>
-            <div class="title-bar-right">
-                <button class="title-btn minimize-btn" id="minimizeBtn">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button class="title-btn maximize-btn" id="maximizeBtn">
-                    <i class="fas fa-expand"></i>
-                </button>
-                <button class="title-btn close-btn" id="closeBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Navigation Sidebar -->
-            <div class="sidebar">
-                <nav class="nav-menu">
-                    <div class="nav-item active" data-tab="download">
-                        <i class="fas fa-download"></i>
-                        <span>Download</span>
-                    </div>
-                    <div class="nav-item" data-tab="history">
-                        <i class="fas fa-history"></i>
-                        <span>History</span>
-                    </div>
-                    <div class="nav-item" data-tab="settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </div>
-                </nav>
-                
-                <div class="sidebar-footer">
-                    <div class="status-indicator">
-                        <div class="status-dot" id="statusDot"></div>
-                        <span class="status-text" id="statusText">Checking...</span>
-                    </div>
-                </div>
-            </div>
+        <main class="flex-1 p-8 overflow-y-auto">
+            <!-- Download Tab -->
+            <div class="tab-content active" id="downloadTab">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold">Download Videos</h2>
+                    <p class="text-zinc-400">Paste a link to get started</p>
+                </header>
 
-            <!-- Content Area -->
-            <div class="content-area">
-                <!-- Download Tab -->
-                <div class="tab-content active" id="downloadTab">
-                    <div class="tab-header">
-                        <h1>Download Videos</h1>
-                        <p>Enter video URLs and customize your download preferences</p>
-                    </div>
-
-                    <!-- URL Input Section -->
-                    <div class="card url-card">
-                        <div class="card-header">
-                            <i class="fas fa-link"></i>
-                            <h3>Video URLs</h3>
+                <div class="space-y-6">
+                    <!-- URL Input -->
+                    <div class="bg-zinc-800 rounded-xl shadow-lg p-6">
+                        <label for="urlInput" class="block text-sm font-medium mb-2">Video URL</label>
+                        <div class="flex space-x-4">
+                            <textarea id="urlInput" placeholder="Paste video URLs here (one per line)..." rows="2" class="flex-1 bg-zinc-700 rounded-md p-3 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                            <button id="pasteBtn" class="px-6 py-2 rounded-md bg-gradient-to-r from-indigo-500 to-purple-500 hover:brightness-110">Paste</button>
+                            <button id="clearBtn" class="px-6 py-2 rounded-md bg-zinc-700 hover:bg-zinc-600">Clear</button>
                         </div>
-                        <div class="card-content">
-                            <div class="url-input-container">
-                                <textarea 
-                                    id="urlInput" 
-                                    placeholder="Paste video URLs here (one per line)..."
-                                    rows="3"
-                                ></textarea>
-                                <div class="url-actions">
-                                    <button class="btn-secondary" id="pasteBtn">
-                                        <i class="fas fa-clipboard"></i>
-                                        Paste
-                                    </button>
-                                    <button class="btn-secondary" id="clearBtn">
-                                        <i class="fas fa-trash"></i>
-                                        Clear
-                                    </button>
+                    </div>
+
+                    <!-- Video Info & Download -->
+                    <div id="videoInfoCard" class="bg-zinc-800 rounded-xl shadow-lg p-6" style="display: none;">
+                        <div class="flex space-x-6">
+                            <img id="videoThumbnail" src="" alt="Video thumbnail" class="w-48 h-27 rounded-md object-cover hover:scale-105 transition">
+                            <div class="flex-1 space-y-4">
+                                <h3 id="videoTitle" class="text-xl font-bold">Video Title</h3>
+                                <div class="flex space-x-6 text-zinc-400">
+                                    <span><i class="fas fa-user mr-2"></i><span id="videoUploader">Uploader</span></span>
+                                    <span><i class="fas fa-clock mr-2"></i><span id="videoDuration">Duration</span></span>
+                                    <span><i class="fas fa-eye mr-2"></i><span id="videoViews">Views</span></span>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-sync-alt"></i>
-                            <h3>yt-dlp Version</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="input-group">
-                                <span id="ytdlpVersion" style="align-self: center; flex-grow: 1;">Checking...</span>
-                                <button class="btn-secondary" id="updateYtdlpBtn">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Check for Updates
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Video Info Card -->
-                    <div class="card video-info-card" id="videoInfoCard" style="display: none;">
-                        <div class="card-header">
-                            <i class="fas fa-video"></i>
-                            <h3>Video Information</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="video-info">
-                                <div class="video-thumbnail">
-                                    <img id="videoThumbnail" src="" alt="Video thumbnail">
-                                </div>
-                                <div class="video-details">
-                                    <h4 id="videoTitle">Video Title</h4>
-                                    <div class="video-meta">
-                                        <span class="meta-item">
-                                            <i class="fas fa-user"></i>
-                                            <span id="videoUploader">Uploader</span>
-                                        </span>
-                                        <span class="meta-item">
-                                            <i class="fas fa-clock"></i>
-                                            <span id="videoDuration">Duration</span>
-                                        </span>
-                                        <span class="meta-item">
-                                            <i class="fas fa-eye"></i>
-                                            <span id="videoViews">Views</span>
-                                        </span>
+                                <div class="flex space-x-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium mb-1">Quality</label>
+                                        <select id="inlineQualitySelect" class="w-full bg-zinc-700 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"></select>
                                     </div>
-                                    <div class="select-group" style="margin-top: 16px;">
-                                        <div class="select-wrapper">
-                                            <label>Quality</label>
-                                            <select id="inlineQualitySelect">
-                                                <option value="best">Best Available</option>
-                                                <option value="2160p">4K (2160p)</option>
-                                                <option value="1440p">2K (1440p)</option>
-                                                <option value="1080p">Full HD (1080p)</option>
-                                                <option value="720p">HD (720p)</option>
-                                                <option value="480p">SD (480p)</option>
-                                                <option value="360p">Low (360p)</option>
-                                            </select>
-                                        </div>
-                                        <div class="select-wrapper">
-                                            <label>Format</label>
-                                            <select id="inlineFormatSelect">
-                                                <option value="mp4">MP4 (Video)</option>
-                                                <option value="webm">WebM (Video)</option>
-                                                <option value="mkv">MKV (Video)</option>
-                                                <option value="mp3">MP3 (Audio)</option>
-                                                <option value="m4a">M4A (Audio)</option>
-                                            </select>
-                                        </div>
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium mb-1">Format</label>
+                                        <select id="inlineFormatSelect" class="w-full bg-zinc-700 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="mp4">MP4</option>
+                                            <option value="webm">WebM</option>
+                                            <option value="mkv">MKV</option>
+                                            <option value="mp3">MP3</option>
+                                            <option value="m4a">M4A</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-
-                    <!-- Download Controls -->
-                    <div class="download-controls">
-                        <button class="btn-primary download-btn" id="downloadBtn">
-                            <i class="fas fa-download"></i>
-                            <span>Start Download</span>
-                        </button>
-                        <button class="btn-danger stop-btn" id="stopBtn" style="display: none;">
-                            <i class="fas fa-stop"></i>
-                            <span>Stop Download</span>
-                        </button>
-                    </div>
-
-                    <!-- Progress Section -->
-                    <div class="card progress-card" id="progressCard" style="display: none;">
-                        <div class="card-header">
-                            <i class="fas fa-progress-bar"></i>
-                            <h3>Download Progress</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="progress-info">
-                                <div class="progress-text">
-                                    <span class="progress-title" id="progressTitle">Preparing download...</span>
-                                    <span class="progress-details" id="progressDetails">0% • -- • ETA: --</span>
-                                </div>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="progressFill"></div>
-                                </div>
-                                <span class="progress-percentage" id="progressPercentage">0%</span>
-                            </div>
+                        <div class="mt-6 flex justify-end space-x-4">
+                             <button id="downloadBtn" class="px-8 py-3 rounded-full bg-gradient-to-r from-green-500 to-teal-500 hover:brightness-110 text-lg font-bold">Start Download</button>
+                             <button id="stopBtn" class="px-8 py-3 rounded-full bg-gradient-to-r from-red-500 to-orange-500 hover:brightness-110 text-lg font-bold" style="display: none;">Stop Download</button>
                         </div>
                     </div>
 
-                    <!-- Output Log -->
-                    <div class="card log-card">
-                        <div class="card-header">
-                            <i class="fas fa-terminal"></i>
-                            <h3>Output Log</h3>
-                            <button class="btn-secondary clear-log-btn" id="clearLogBtn">
-                                <i class="fas fa-trash"></i>
-                                Clear
-                            </button>
+                    <!-- Progress & Log -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div id="progressCard" class="bg-zinc-800 rounded-xl shadow-lg p-6" style="display: none;">
+                             <h4 class="font-bold mb-3">Download Progress</h4>
+                             <div class="w-full bg-zinc-700 rounded-full h-2.5">
+                                <div id="progressFill" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+                             </div>
+                             <div class="flex justify-between text-sm mt-2">
+                                <span id="progressTitle">Preparing...</span>
+                                <span id="progressPercentage">0%</span>
+                             </div>
+                             <p id="progressDetails" class="text-xs text-zinc-400 mt-1">Speed: -- | ETA: --</p>
                         </div>
-                        <div class="card-content">
-                            <div class="log-container" id="logContainer">
-                                <div class="log-message">Ready to download...</div>
+                        <div class="bg-zinc-800 rounded-xl shadow-lg p-6">
+                            <h4 class="font-bold mb-3">Output Log</h4>
+                            <div id="logContainer" class="bg-black/40 rounded-md p-3 max-h-[200px] overflow-y-auto font-mono text-sm">
+                                <div>Ready to download...</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- History Tab -->
-                <div class="tab-content" id="historyTab">
-                    <div class="tab-header">
-                        <h1>Download History</h1>
-                        <p>View and manage your download history</p>
-                    </div>
-                    <div class="card">
-                        <div class="card-content">
-                            <div class="empty-state">
-                                <i class="fas fa-history"></i>
-                                <h3>Coming Soon</h3>
-                                <p>Download history feature will be available in the next update</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Settings Tab -->
-                <div class="tab-content" id="settingsTab">
-                    <div class="tab-header">
-                        <h1>Settings</h1>
-                        <p>Customize your download preferences</p>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-folder"></i>
-                            <h3>Default Output Location</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="input-group">
-                                <input type="text" id="outputDir" placeholder="Select download folder...">
-                                <button class="btn-secondary" id="browseBtn">
-                                    <i class="fas fa-folder-open"></i>
-                                    Browse
-                                </button>
-                                <button class="btn-secondary" id="openDirBtn">
-                                    <i class="fas fa-external-link-alt"></i>
-                                    Open
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-sliders-h"></i>
-                            <h3>Default Quality & Format</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="select-group">
-                                <div class="select-wrapper">
-                                    <label>Quality</label>
-                                    <select id="qualitySelect">
-                                        <option value="best">Best Available</option>
-                                        <option value="2160p">4K (2160p)</option>
-                                        <option value="1440p">2K (1440p)</option>
-                                        <option value="1080p">Full HD (1080p)</option>
-                                        <option value="720p">HD (720p)</option>
-                                        <option value="480p">SD (480p)</option>
-                                        <option value="360p">Low (360p)</option>
-                                    </select>
-                                </div>
-                                <div class="select-wrapper">
-                                    <label>Format</label>
-                                    <select id="formatSelect">
-                                        <option value="mp4">MP4 (Video)</option>
-                                        <option value="webm">WebM (Video)</option>
-                                        <option value="mkv">MKV (Video)</option>
-                                        <option value="mp3">MP3 (Audio)</option>
-                                        <option value="m4a">M4A (Audio)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-cog"></i>
-                            <h3>Subtitles</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="checkbox-grid">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" id="subtitlesCheck">
-                                    <span class="checkmark"></span>
-                                    <span class="label-text">Download subtitles by default</span>
-                                </label>
-                            </div>
-                            <div class="input-group" style="margin-top: 16px;">
-                                <label for="subtitleLangInput" style="white-space: nowrap; align-self: center; margin-right: 8px;">Default Subtitle Language:</label>
-                                <input type="text" id="subtitleLangInput" placeholder="e.g., en, es" value="en">
-                            </div>
+                            <button id="clearLogBtn" class="text-xs text-zinc-400 hover:text-white mt-2">Clear Log</button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- History Tab -->
+            <div class="tab-content" id="historyTab" style="display:none;">
+                 <header class="mb-8">
+                    <h2 class="text-3xl font-bold">Download History</h2>
+                </header>
+                <div class="bg-zinc-800 rounded-xl shadow-lg p-12 text-center">
+                    <i class="fas fa-history text-4xl text-zinc-500 mb-4"></i>
+                    <h3 class="text-xl font-bold">Coming Soon</h3>
+                    <p class="text-zinc-400">Download history will be available here.</p>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settingsTab" style="display:none;">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold">Settings</h2>
+                    <p class="text-zinc-400">Customize your preferences</p>
+                </header>
+                <div class="space-y-6">
+                    <div class="bg-zinc-800 rounded-xl shadow-lg p-6">
+                        <h3 class="font-bold text-lg mb-4">Default Output Location</h3>
+                        <div class="flex space-x-4">
+                            <input type="text" id="outputDir" placeholder="Select download folder..." class="flex-1 bg-zinc-700 rounded-md p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <button id="browseBtn" class="px-6 py-2 rounded-md bg-zinc-700 hover:bg-zinc-600">Browse</button>
+                            <button id="openDirBtn" class="px-6 py-2 rounded-md bg-zinc-700 hover:bg-zinc-600">Open</button>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-800 rounded-xl shadow-lg p-6">
+                         <h3 class="font-bold text-lg mb-4">Default Quality & Format</h3>
+                         <div class="flex space-x-4">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium mb-1">Quality</label>
+                                <select id="qualitySelect" class="w-full bg-zinc-700 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                                     <option value="best">Best Available</option>
+                                     <option value="1080p">1080p</option>
+                                     <option value="720p">720p</option>
+                                </select>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium mb-1">Format</label>
+                                <select id="formatSelect" class="w-full bg-zinc-700 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                                     <option value="mp4">MP4</option>
+                                     <option value="webm">WebM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="bg-zinc-800 rounded-xl shadow-lg p-6">
+                        <h3 class="font-bold text-lg mb-4">yt-dlp Version</h3>
+                        <div class="flex items-center space-x-4">
+                            <span id="ytdlpVersion" class="flex-1">Checking...</span>
+                            <button id="updateYtdlpBtn" class="px-6 py-2 rounded-md bg-zinc-700 hover:bg-zinc-600">Check for Updates</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- Toast Notifications -->
