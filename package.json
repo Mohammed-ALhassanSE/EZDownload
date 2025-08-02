@@ -4,11 +4,11 @@
   "description": "Beautiful yt-dlp GUI with anime-inspired design",
   "main": "main.js",
   "scripts": {
-    "start": "npm run build:css && electron .",
-    "dev": "npm run build:css -- --watch & electron . --dev",
-    "build": "npm run build:css && electron-builder",
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
     "dist": "electron-builder --publish=never",
-    "build:css": "npx tailwindcss -i ./src/input.css -o ./output.css"
+    "build:css": "tailwindcss -i ./src/input.css -o ./output.css"
   },
   "keywords": [
     "yt-dlp",
