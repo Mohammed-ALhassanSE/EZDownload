@@ -497,6 +497,12 @@ body {
     font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l3-3 3 3M7 13l3 3 3-3" /></svg>');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 1em;
 }
 
 .select-wrapper select:focus {
