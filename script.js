@@ -78,6 +78,7 @@ const elements = {
     closePlaylistModal: document.getElementById('closePlaylistModal'),
     historyContainer: document.getElementById('historyContainer'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
     playlistTitle: document.getElementById('playlistTitle'),
     playlistVideosContainer: document.getElementById('playlistVideosContainer'),
     selectAllBtn: document.getElementById('selectAllBtn'),
@@ -313,8 +314,10 @@ async function displayHistory() {
     const history = await window.electronAPI.getHistory();
     const container = elements.historyContainer;
     container.innerHTML = '';
+    container.classList.remove('empty');
 
     if (history.length === 0) {
+        container.classList.add('empty');
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-history"></i>
@@ -929,9 +932,24 @@ async function saveSettings() {
     }
 }
 
-// Auto-save settings when options change
-document.addEventListener('change', (e) => {
-    if (e.target.matches('#outputDir, #qualitySelect, #formatSelect, input[type="checkbox"], #subtitleLangInput')) {
-        saveSettings();
+async function saveSettings() {
+    const settings = {
+        outputDir: elements.outputDir.value,
+        quality: elements.qualitySelect.value,
+        format: elements.formatSelect.value,
+        subtitles: elements.subtitlesCheck.checked,
+        subtitleLang: elements.subtitleLangInput.value,
+    };
+
+    try {
+        await window.electronAPI.saveSettings(settings);
+        showToast('Success', 'Settings saved successfully', 'success');
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showToast('Error', 'Failed to save settings', 'error');
     }
-});
+}
+
+// ... in setupEventListeners ...
+    // Settings
+    elements.saveSettingsBtn.addEventListener('click', saveSettings);

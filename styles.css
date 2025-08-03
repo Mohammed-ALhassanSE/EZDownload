@@ -959,6 +959,13 @@ body {
     gap: 24px;
 }
 
+.history-container.empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
 .history-item {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
