@@ -317,6 +317,7 @@ async function displayHistory() {
     container.classList.remove('empty');
 
     if (history.length === 0) {
+        elements.clearHistoryBtn.style.display = 'none';
         container.classList.add('empty');
         container.innerHTML = `
             <div class="empty-state">
@@ -327,6 +328,8 @@ async function displayHistory() {
         `;
         return;
     }
+
+    elements.clearHistoryBtn.style.display = 'block';
 
     history.forEach(item => {
         const historyItem = document.createElement('div');
