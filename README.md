@@ -111,7 +111,7 @@ yt-dlp --version
 1. **Clone or download the repository:**
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Mohammed-ALhassanSE/EZDownload.git
 cd ytdlp-gui-electron
 ```
 
