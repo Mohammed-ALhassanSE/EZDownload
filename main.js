@@ -114,16 +114,36 @@ ipcMain.handle('get-video-info', async (event, url) => {
       if (code === 0 && data.trim()) {
         try {
           const lines = data.trim().split('\n');
-          const info = JSON.parse(lines[0]);
-          resolve({
-            success: true,
-            title: info.title || 'Unknown',
-            duration: info.duration || 0,
-            uploader: info.uploader || 'Unknown',
-            view_count: info.view_count || 0,
-            upload_date: info.upload_date || 'Unknown',
-            thumbnail: info.thumbnail || null
-          });
+          const entries = lines.map(line => JSON.parse(line));
+
+          if (entries.length === 1) {
+            // Single video
+            const info = entries[0];
+            resolve({
+              success: true,
+              isPlaylist: false,
+              title: info.title || 'Unknown',
+              duration: info.duration || 0,
+              uploader: info.uploader || 'Unknown',
+              view_count: info.view_count || 0,
+              thumbnail: info.thumbnail || null,
+              formats: info.formats || []
+            });
+          } else {
+            // Playlist
+            resolve({
+              success: true,
+              isPlaylist: true,
+              videos: entries.map(info => ({
+                title: info.title || 'Unknown',
+                duration: info.duration || 0,
+                uploader: info.uploader || 'Unknown',
+                thumbnail: info.thumbnail || null,
+                original_url: info.original_url,
+                id: info.id
+              }))
+            });
+          }
         } catch (parseError) {
           reject({ success: false, error: 'Failed to parse video info' });
         }
@@ -134,58 +154,6 @@ ipcMain.handle('get-video-info', async (event, url) => {
 
     ytdlp.on('error', (err) => {
       reject({ success: false, error: err.message });
-    });
-  });
-});
-
-// Get playlist info
-ipcMain.handle('get-playlist-info', async (event, url) => {
-  return new Promise((resolve, reject) => {
-    const ytdlp = spawn('yt-dlp', ['--dump-json', '--flat-playlist', url]);
-    let data = '';
-    let error = '';
-
-    ytdlp.stdout.on('data', (chunk) => {
-      data += chunk.toString();
-    });
-
-    ytdlp.stderr.on('data', (chunk) => {
-      error += chunk.toString();
-    });
-
-    ytdlp.on('close', (code) => {
-      if (code === 0 && data.trim()) {
-        try {
-          const lines = data.trim().split('\n');
-          const entries = [];
-          let playlistTitle = 'Unknown Playlist';
-
-          for (const line of lines) {
-            if (line.trim()) {
-              const entry = JSON.parse(line);
-              if (entry._type === 'playlist') {
-                playlistTitle = entry.title;
-              } else {
-                entries.push({
-                  title: entry.title || 'Unknown',
-                  duration: entry.duration || 0,
-                  uploader: entry.uploader || 'Unknown'
-                });
-              }
-            }
-          }
-
-          resolve({
-            success: true,
-            title: playlistTitle,
-            entries: entries
-          });
-        } catch (parseError) {
-          reject({ success: false, error: 'Failed to parse playlist info' });
-        }
-      } else {
-        reject({ success: false, error: error || 'Failed to get playlist info' });
-      }
     });
   });
 });
@@ -201,7 +169,7 @@ ipcMain.handle('start-download', async (event, options) => {
     
     // Output template
     if (options.outputDir) {
-      const template = path.join(options.outputDir, '%(title)s.%(ext)s');
+      const template = path.join(options.outputDir, '%(title)s', '%(title)s.%(ext)s');
       args.push('-o', template);
     }
 
@@ -211,9 +179,16 @@ ipcMain.handle('start-download', async (event, options) => {
     } else if (options.format === 'm4a') {
       args.push('-x', '--audio-format', 'm4a');
     } else {
-      const formatString = options.quality === 'best' 
-        ? `best[ext=${options.format}]/best`
-        : `best[height<=${options.quality.replace('p', '')}][ext=${options.format}]/best[height<=${options.quality.replace('p', '')}]/best[ext=${options.format}]/best`;
+      let formatString;
+      if (isNaN(parseInt(options.quality, 10))) {
+        // Handle strings like '1080p' or 'best'
+        formatString = options.quality === 'best'
+            ? `best[ext=${options.format}]/best`
+            : `best[height<=${options.quality.replace('p', '')}][ext=${options.format}]/best[height<=${options.quality.replace('p', '')}]/best[ext=${options.format}]/best`;
+      } else {
+        // Handle format_id
+        formatString = `${options.quality}+bestaudio/best`;
+      }
       args.push('-f', formatString);
     }
 
@@ -221,13 +196,22 @@ ipcMain.handle('start-download', async (event, options) => {
     if (options.playlist) args.push('--yes-playlist');
     else args.push('--no-playlist');
     
-    if (options.subtitles) args.push('--write-auto-subs', '--sub-lang', 'en');
+    if (options.subtitles) {
+        args.push('--write-auto-subs');
+        if (options.subtitleLang) {
+            args.push('--sub-lang', options.subtitleLang);
+        } else {
+            args.push('--sub-lang', 'en'); // Default to 'en' if not provided
+        }
+    }
     if (options.thumbnail) args.push('--write-thumbnail');
     if (options.metadata) args.push('--embed-metadata');
     if (options.description) args.push('--write-description');
     
     args.push('--continue', '--no-overwrites');
-    args.push(options.url);
+
+    const urls = options.url.split('\n').filter(u => u.trim() !== '');
+    args.push(...urls);
 
     downloadProcess = spawn('yt-dlp', args);
     let hasStarted = false;
@@ -263,12 +247,23 @@ ipcMain.handle('start-download', async (event, options) => {
     });
 
     downloadProcess.stderr.on('data', (data) => {
-      mainWindow.webContents.send('download-output', `Error: ${data.toString()}`);
+      const errorOutput = data.toString();
+      if (errorOutput.includes('403')) {
+          mainWindow.webContents.send('download-error', 'HTTP Error 403: Forbidden. Your version of yt-dlp may be outdated. Please try updating it in the Settings tab.');
+      }
+      mainWindow.webContents.send('download-output', `Error: ${errorOutput}`);
     });
 
     downloadProcess.on('close', (code) => {
       downloadProcess = null;
       mainWindow.webContents.send('download-complete', { code });
+      if (code === 0 && options.videoInfo) {
+        saveHistory({
+            ...options.videoInfo,
+            url: options.url,
+            downloadDate: new Date().toISOString()
+        });
+      }
       if (!hasStarted) {
         reject({ success: false, error: 'Download failed to start' });
       }
@@ -304,6 +299,33 @@ ipcMain.handle('stop-download', async () => {
   return { success: false };
 });
 
+// Update yt-dlp
+ipcMain.handle('update-ytdlp', async () => {
+  return new Promise((resolve, reject) => {
+    const ytdlpUpdate = spawn('yt-dlp', ['-U']);
+
+    ytdlpUpdate.stdout.on('data', (data) => {
+      mainWindow.webContents.send('ytdlp-update-output', data.toString());
+    });
+
+    ytdlpUpdate.stderr.on('data', (data) => {
+      mainWindow.webContents.send('ytdlp-update-output', `Error: ${data.toString()}`);
+    });
+
+    ytdlpUpdate.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true });
+      } else {
+        reject({ success: false, error: `yt-dlp update process exited with code ${code}` });
+      }
+    });
+
+    ytdlpUpdate.on('error', (err) => {
+      reject({ success: false, error: err.message });
+    });
+  });
+});
+
 // Check yt-dlp
 ipcMain.handle('check-ytdlp', async () => {
   return new Promise((resolve) => {
@@ -333,8 +355,67 @@ ipcMain.handle('get-default-path', () => {
   return path.join(os.homedir(), 'Downloads', 'yt-dlp');
 });
 
+// History management
+const historyPath = path.join(os.homedir(), '.ytdlp-gui-history.json');
+
+function loadHistory() {
+  try {
+    if (fs.existsSync(historyPath)) {
+      const data = fs.readFileSync(historyPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading history:', error);
+  }
+  return [];
+}
+
+function saveHistory(videoInfo) {
+  const history = loadHistory();
+  // Avoid duplicates
+  const existingIndex = history.findIndex(item => item.url === videoInfo.url);
+  if (existingIndex > -1) {
+    history.splice(existingIndex, 1);
+  }
+  history.unshift(videoInfo); // Add to the beginning
+  try {
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+  } catch (error) {
+    console.error('Error saving history:', error);
+  }
+}
+
 // Settings management
 const settingsPath = path.join(os.homedir(), '.ytdlp-gui-settings.json');
+
+ipcMain.handle('check-for-updates', async () => {
+    return new Promise((resolve) => {
+        const ytdlpUpdate = spawn('yt-dlp', ['-U']);
+        let output = '';
+        ytdlpUpdate.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+        ytdlpUpdate.on('close', () => {
+            resolve(output);
+        });
+    });
+});
+
+ipcMain.handle('get-history', () => {
+    return loadHistory();
+});
+
+ipcMain.handle('clear-history', () => {
+    try {
+        if (fs.existsSync(historyPath)) {
+            fs.unlinkSync(historyPath);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        return { success: false, error: error.message };
+    }
+});
 
 ipcMain.handle('load-settings', () => {
   try {
