@@ -1,53 +1,91 @@
-# YT-DLP GUI - Electron App
+# YT-DLP GUI
 
-A beautiful and clean GUI for yt-dlp with smooth animations and a modern interface.
+<div align="center">
 
-## Features
+**A beautiful, modern desktop application for yt-dlp with smooth animations and an intuitive interface**
 
-- **Modern UI**: Sleek design with glassmorphism effects and smooth animations
-- **Anime.js Animations**: Beautiful transitions and micro-interactions
-- **Video Information**: Preview video details before downloading
-- **Multiple Formats**: Support for various video and audio formats
-- **Progress Tracking**: Real-time download progress with speed and ETA
-- **Custom Output**: Choose your download location
-- **Playlist Support**: Download entire playlists or select specific videos
-- **Additional Options**: Subtitles, thumbnails, metadata, and more
-- **Toast Notifications**: Beautiful pop-up notifications for user feedback
-- **Auto-save Settings**: Your preferences are automatically saved
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen)](https://nodejs.org/)
+[![Electron](https://img.shields.io/badge/Electron-latest-47848F?logo=electron)](https://www.electronjs.org/)
 
-## Prerequisites
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Screenshots](#screenshots) • [Contributing](#contributing)
 
-Before running this application, you need to have:
+</div>
 
-1. **Node.js** (v16 or higher)
-2. **yt-dlp** installed on your system
+---
+
+## ✨ Features
+
+### 🎨 Modern Interface
+- **Glassmorphism Design** - Elegant UI with frosted glass effects and gradient backgrounds
+- **Smooth Animations** - Powered by Anime.js for delightful micro-interactions
+- **Responsive Layout** - Adapts beautifully to different window sizes
+- **Custom Styling** - Polished scrollbars, hover effects, and transitions
+
+### 📥 Download Capabilities
+- **Multiple Formats** - MP4, WebM, MKV, MP3, M4A, and more
+- **Quality Options** - From 4K down to 240p, choose your preferred resolution
+- **Playlist Support** - Download entire playlists or cherry-pick specific videos
+- **Smart Defaults** - Automatically selects the best available quality
+
+### 🎯 User Experience
+- **Video Preview** - View thumbnail, title, uploader, duration, and view count before downloading
+- **Real-time Progress** - Live progress bar with download speed and ETA
+- **Toast Notifications** - Beautiful pop-up feedback for all actions
+- **Auto-save Settings** - Your preferences persist between sessions
+- **Custom Output** - Choose exactly where your downloads go
+
+### ⚙️ Advanced Options
+- **Subtitle Downloads** - Automatically fetch available subtitles
+- **Thumbnail Extraction** - Save video thumbnails separately
+- **Metadata Embedding** - Include video information in file metadata
+- **Detailed Logging** - Timestamped output log for troubleshooting
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+You'll need these installed on your system:
+
+- **Node.js** (v16 or higher) - [Download here](https://nodejs.org/)
+- **yt-dlp** - The powerful video downloader this app uses
 
 ### Installing yt-dlp
 
-**Windows:**
+<details>
+<summary><b>Windows</b></summary>
+
 ```bash
-# Using pip
+# Using pip (recommended)
 pip install yt-dlp
 
 # Using winget
 winget install yt-dlp
 
-# Using chocolatey
+# Using Chocolatey
 choco install yt-dlp
 ```
+</details>
 
-**macOS:**
+<details>
+<summary><b>macOS</b></summary>
+
 ```bash
-# Using Homebrew
+# Using Homebrew (recommended)
 brew install yt-dlp
 
 # Using pip
 pip install yt-dlp
 ```
+</details>
 
-**Linux:**
+<details>
+<summary><b>Linux</b></summary>
+
 ```bash
-# Using pip
+# Using pip (recommended)
 pip install yt-dlp
 
 # Ubuntu/Debian
@@ -55,151 +93,238 @@ sudo apt install yt-dlp
 
 # Arch Linux
 sudo pacman -S yt-dlp
+
+# Fedora
+sudo dnf install yt-dlp
+```
+</details>
+
+Verify installation:
+```bash
+yt-dlp --version
 ```
 
-## Installation
+---
 
-1. **Clone or create the project directory:**
+## 📦 Installation
+
+1. **Clone or download the repository:**
+
 ```bash
-mkdir ytdlp-gui-electron
+git clone <your-repo-url>
 cd ytdlp-gui-electron
 ```
 
-2. **Create the project files:**
-   - Copy all the provided files into your project directory
-   - Make sure you have: `package.json`, `main.js`, `preload.js`, `index.html`, `styles.css`, `script.js`
+Or download and extract the ZIP file.
 
-3. **Install dependencies:**
+2. **Install dependencies:**
+
 ```bash
 npm install
 ```
 
-## Running the Application
+3. **Run the application:**
 
-### Development Mode
+```bash
+npm start
+```
+
+---
+
+## 🎮 Usage
+
+### Basic Download
+1. Paste a video URL into the input field
+2. Click **Get Info** to preview the video
+3. Select your preferred quality and format
+4. Click **Download** and watch the magic happen
+
+### Advanced Options
+- **Choose Output Location** - Click the folder icon to select your download directory
+- **Download Subtitles** - Enable the subtitles checkbox before downloading
+- **Save Thumbnails** - Keep video thumbnails alongside your downloads
+- **Embed Metadata** - Include video information in the file properties
+
+### Playlist Downloads
+1. Paste a playlist URL
+2. Preview all videos in the playlist
+3. Download the entire playlist or select individual videos
+
+---
+
+## 🏗️ Project Structure
+
+```
+ytdlp-gui-electron/
+├── main.js               # Electron main process (backend logic)
+├── preload.js            # Secure IPC bridge between renderer and main
+├── index.html            # Application interface markup
+├── styles.css            # Styling with animations and effects
+├── script.js             # Frontend functionality and UI logic
+├── package.json          # Dependencies and project configuration
+└── README.md             # Documentation (you are here!)
+```
+
+---
+
+## 🔧 Development
+
+### Run in Development Mode
+
 ```bash
 npm start
 # or
 npm run dev
 ```
 
-### Building for Distribution
+The app will launch with hot-reload enabled for quick iterations.
+
+### Build for Distribution
+
 ```bash
 npm run build
 ```
 
-This will create distribution packages in the `dist` folder for your platform.
+This creates platform-specific distributables in the `dist/` folder:
+- **Windows**: `.exe` installer
+- **macOS**: `.dmg` disk image
+- **Linux**: `.AppImage` or `.deb` package
 
-## Project Structure
+---
 
-```
-ytdlp-gui-electron/
-├── package.json          # Project configuration and dependencies
-├── main.js               # Electron main process
-├── preload.js            # Secure IPC bridge
-├── index.html            # Main interface markup
-├── styles.css            # Beautiful styling with animations
-├── script.js             # Frontend functionality
-└── README.md            # This file
-```
+## 🎨 Customization
 
-## Features Walkthrough
+### Changing the Color Scheme
 
-### 🎨 **Beautiful Interface**
-- Modern glassmorphism design with gradient backgrounds
-- Smooth animations powered by Anime.js
-- Responsive layout that works on different screen sizes
-- Custom scrollbars and hover effects
+Edit the CSS variables in `styles.css`:
 
-### 📺 **Video Information**
-- Get detailed video information before downloading
-- Shows thumbnail, title, uploader, duration, and view count
-- Supports both single videos and playlists
-
-### ⚙️ **Download Options**
-- Multiple quality options (4K to 240p)
-- Various formats (MP4, WebM, MKV, MP3, M4A)
-- Additional options: subtitles, thumbnails, metadata
-- Custom output directory selection
-
-### 📊 **Progress Tracking**
-- Real-time progress bar with percentage
-- Download speed and estimated time remaining
-- Detailed output log with timestamps
-- Toast notifications for status updates
-
-### 🎯 **User Experience**
-- Auto-save settings between sessions
-- Clipboard integration for easy URL pasting
-- Keyboard shortcuts and intuitive navigation
-- Loading states and error handling
-
-## Configuration
-
-The app automatically saves your settings in a JSON file in your home directory. Settings include:
-
-- Default download directory
-- Preferred quality and format
-- Checkbox preferences
-- Window size and position
-
-## Troubleshooting
-
-### yt-dlp not found
-If you get an error about yt-dlp not being found:
-1. Make sure yt-dlp is installed: `yt-dlp --version`
-2. Ensure it's in your system PATH
-3. Try reinstalling yt-dlp
-
-### Download fails
-If downloads fail:
-1. Check your internet connection
-2. Verify the video URL is valid
-3. Make sure you have write permissions to the output directory
-4. Check the output log for detailed error messages
-
-### Performance Issues
-If the app feels slow:
-1. Close other resource-intensive applications
-2. Try downloading one video at a time
-3. Check available disk space
-
-## Customization
-
-### Changing Colors
-Edit the CSS variables in `styles.css` to customize the color scheme:
 ```css
 :root {
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --accent-color: #667eea;
     --success-color: #4caf50;
     --error-color: #f44336;
+    --warning-color: #ff9800;
 }
 ```
 
-### Adding New Features
-The modular structure makes it easy to add new features:
-1. Add UI elements in `index.html`
-2. Style them in `styles.css`
-3. Add functionality in `script.js`
-4. Handle backend logic in `main.js`
+### Adding Features
 
-## Contributing
+The modular architecture makes it easy to extend:
 
-Feel free to contribute to this project by:
-- Reporting bugs
-- Suggesting new features
-- Submitting pull requests
-- Improving documentation
+1. **UI Changes** - Modify `index.html` and `styles.css`
+2. **Frontend Logic** - Add functionality in `script.js`
+3. **Backend Logic** - Handle IPC and system operations in `main.js`
+4. **Secure Communication** - Update `preload.js` for new IPC channels
 
-## License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 🐛 Troubleshooting
 
-## Acknowledgments
+### yt-dlp Not Found
 
-- **yt-dlp** - The powerful video downloader this GUI wraps around
-- **Electron** - For making cross-platform desktop apps possible
-- **Anime.js** - For the beautiful animations
-- **Font Awesome** - For the icons
-- **Inter Font** - For the beautiful typography
+**Problem:** Error message about yt-dlp not being found
+
+**Solutions:**
+- Verify installation: `yt-dlp --version`
+- Ensure yt-dlp is in your system PATH
+- Restart your terminal/command prompt after installation
+- Try reinstalling: `pip install --upgrade yt-dlp`
+
+### Download Failures
+
+**Problem:** Downloads fail or error out
+
+**Check:**
+- ✅ Internet connection is stable
+- ✅ Video URL is valid and accessible
+- ✅ You have write permissions for the output directory
+- ✅ Sufficient disk space is available
+- ✅ Review the output log for specific error messages
+
+### Performance Issues
+
+**Problem:** Application feels sluggish
+
+**Try:**
+- Close resource-intensive applications
+- Download one video at a time for large files
+- Check available disk space
+- Restart the application
+- Update to the latest version of yt-dlp
+
+### Common Error Messages
+
+| Error | Solution |
+|-------|----------|
+| `ERROR: Unable to extract video data` | Video may be private, deleted, or region-locked |
+| `HTTP Error 403` | May require cookies/authentication (not currently supported) |
+| `Postprocessing: ffmpeg not found` | Install ffmpeg for format conversion features |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how you can help:
+
+### Reporting Bugs
+- Use the issue tracker to report bugs
+- Include your OS, Node.js version, and yt-dlp version
+- Provide steps to reproduce the issue
+- Share relevant error messages or logs
+
+### Suggesting Features
+- Open an issue with the "enhancement" label
+- Describe the feature and its use case
+- Explain how it would benefit users
+
+### Pull Requests
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow existing code style
+- Test your changes thoroughly
+- Update documentation as needed
+- Keep commits focused and well-described
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+This project wouldn't be possible without these amazing tools:
+
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** - The powerful command-line video downloader
+- **[Electron](https://www.electronjs.org/)** - Framework for building cross-platform desktop apps
+- **[Anime.js](https://animejs.com/)** - Lightweight JavaScript animation library
+- **[Font Awesome](https://fontawesome.com/)** - Icon library for beautiful UI elements
+- **[Inter Font](https://rsms.me/inter/)** - Modern and readable typeface
+
+---
+
+## 📞 Support
+
+If you encounter issues or have questions:
+
+- 📖 Check the [Troubleshooting](#troubleshooting) section
+- 🐛 [Open an issue](../../issues) on GitHub
+- 💬 Start a [discussion](../../discussions) for questions and ideas
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the yt-dlp community**
+
+[⬆ Back to Top](#yt-dlp-gui)
+
+</div>
